@@ -4,40 +4,30 @@ import streamlit as st
 import pandaslib as pl
 from pandaslib import extract_year_mdy
   
-SURVEY_URL = "https://docs.google.com/spreadsheets/d/1IPS5dBSGtwYVbjsfbaMCYIWnOuRmJcbequohNxCyGVw/export?resourcekey=&gid=1625408792&format=csv"
-STATES_URL = "https://docs.google.com/spreadsheets/d/14wvnQygIX1eCVo7H5B7a96W1v5VCg6Q9yeRoESF6epw/export?format=csv"
+survey_url = "https://docs.google.com/spreadsheets/d/1IPS5dBSGtwYVbjsfbaMCYIWnOuRmJcbequohNxCyGVw/export?resourcekey=&gid=1625408792&format=csv"
+survey = pd.read_csv(survey_url)
 
-def extract_states():
-    df_states = pd.read_csv(STATES_URL)
-    df_states['source'] = 'states_lookup'
-    df_states.to_csv("cache/states.csv", index=False)
-    print("Saved: cache/states.csv")
+# Extract year from Timestamp using your library function
+survey['year'] = survey['Timestamp'].apply(pl.extract_year_mdy)
 
-def extract_survey():
-    df_survey = pd.read_csv(SURVEY_URL)
-    df_survey['year'] = df_survey['Timestamp'].apply(extract_year_mdy)
-    df_survey['source'] = 'askamanager_survey'
-    df_survey.to_csv("cache/survey.csv", index=False)
-    print("Saved: cache/survey.csv")
-    return df_survey['year'].dropna().unique()
+# Save to cache
+survey.to_csv("cache/survey.csv", index=False)
 
-def extract_cost_of_living(years):
-    for year in sorted(years):
-        df_col = pd.DataFrame({
-            'location': ['New York, NY', 'Los Angeles, CA'],
-            'cost_of_living_index': [147.6, 142.4]
-        })
-        df_col['year'] = year
-        df_col['source'] = f'cost_of_living_{year}'
-        path = f"cache/col_{year}.csv"
-        df_col.to_csv(path, index=False)
-        print(f"Saved: {path}")
+# --- Cost of Living Data ---
+years = survey['year'].dropna().unique()
 
-def main():
-    extract_states()
-    years = extract_survey()
-    extract_cost_of_living(years)
+for year in years:
+    try:
+        col_tables = pd.read_html(f"https://www.numbeo.com/cost-of-living/rankings.jsp?title={int(year)}&displayColumn=0")
+        col_year = col_tables[1]  # This is the correct table
+        col_year['year'] = int(year)
+        col_year.to_csv(f"cache/col_{int(year)}.csv", index=False)
+        print(f"Saved: cache/col_{int(year)}.csv")
+    except Exception as e:
+        print(f"Failed to extract COL for {year}: {e}")
 
-if __name__ == '__main__':
-    main()
+# --- State Lookup Data ---
+states_url = "https://docs.google.com/spreadsheets/d/14wvnQygIX1eCVo7H5B7a96W1v5VCg6Q9yeRoESF6epw/export?format=csv"
+states = pd.read_csv(states_url)
+states.to_csv("cache/states.csv", index=False)
 
