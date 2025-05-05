@@ -1,7 +1,7 @@
 # Reflection
 
-Student Name:  name
-Sudent Email:  email
+Student Name:  Jonah Peeler
+Sudent Email:  jzpeeler@syr.edu
 
 ## Instructions
 
@@ -23,3 +23,4 @@ Examples:
 
 `--- Reflection Below This Line ---`
 
+This assignment taught me how to build a full ETL pipeline using real-world salary survey data. I learned how to extract data from Google Sheets, and clean and combine multiple datasets. I ran into issues with the file names and couldn't log into MinIO, so I'm not sure if I did everything correctly. especially with the load.py part.
